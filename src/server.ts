@@ -6,7 +6,7 @@ import Routes from "./routes";
 export const prismaClient = new PrismaClient();
 //setup routes
 app.use("/api", Routes.userRouter);
-
+app.use("/api", Routes.chatRouter);
 //start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
