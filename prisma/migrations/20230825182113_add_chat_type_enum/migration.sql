@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `chat` ADD COLUMN `type` ENUM('DIRECT', 'GROUP') NOT NULL DEFAULT 'DIRECT';
