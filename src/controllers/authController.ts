@@ -29,7 +29,38 @@ const authController = {
 			res.json({ error: error.message }).status(500);
 		}
 	},
-	signIn: async (req: Request, res: Response) => {},
+	signIn: async (req: Request, res: Response) => {
+		const { username, password } = req.body;
+		//validate email, password
+		if (!username || !password) {
+			return res.json({ error: "Please fill all fields" }).status(400);
+		}
+		try {
+			const existingUser = await User.findFirst({
+				where: {
+					OR: [
+						{
+							email: username,
+						},
+						{
+							username: username,
+						},
+					],
+				},
+			});
+			if (!existingUser) {
+				res.json({ error: "Invalid email or username" }).status(401);
+				return;
+			}
+			const isPasswordCorrect = await bcrypt.compare(password, existingUser.passwordHash);
+			if (!isPasswordCorrect) {
+				res.json({ error: "Invalid password" }).status(401);
+				return;
+			}
+			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!);
+			res.json({ data: { token } }).status(200);
+		} catch (error: any) {}
+	},
 	logOut: async (req: Request, res: Response) => {},
 };
 export default authController;
