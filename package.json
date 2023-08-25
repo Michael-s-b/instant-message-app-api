@@ -7,7 +7,7 @@
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "prisma-migrate": "pnpm prisma migrate dev --name init"
+    "prisma-migrate": "pnpm prisma migrate dev"
   },
   "keywords": [],
   "author": "",
