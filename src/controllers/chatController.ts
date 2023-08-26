@@ -1,18 +1,35 @@
 import { Request, Response } from "express";
-import { Chat } from "../models";
+import { Chat, User } from "../models";
 import { ChatType } from "../enums";
-import { parseStringToChatTypeEnum } from "../util";
 
 const chatController = {
 	getAllChats: async (req: Request, res: Response) => {
-		const allChats = await Chat.findMany({ include: { users: { select: { userId: true } } } });
-		res.json({ data: allChats }).status(200);
+		try {
+			const allChats = await Chat.findMany({
+				where: { users: { some: { userId: req.userId! } } },
+				include: { users: { select: { userId: true } } },
+			});
+			res.json({ data: allChats }).status(200);
+		} catch (error: any) {
+			res.json({ error: error.message }).status(500);
+		}
 	},
 	createDirectChat: async (req: Request, res: Response) => {
-		const { userId1, userId2 } = req.body;
+		const { contact } = req.body;
 
 		try {
-			if (userId1 === userId2) {
+			if (!contact) {
+				res.json({ error: "contact is required" }).status(401);
+				return;
+			}
+			const contactFound = await User.findFirst({
+				where: { OR: [{ username: contact }, { email: contact }] },
+			});
+			if (!contactFound) {
+				res.json({ error: "Contact not found" }).status(404);
+				return;
+			}
+			if (req.userId === contactFound.id) {
 				res.json({ error: "Cannot create chat with yourself" }).status(401);
 				return;
 			}
@@ -20,8 +37,8 @@ const chatController = {
 			const existingChat = await Chat.findFirst({
 				where: {
 					AND: [
-						{ users: { some: { userId: Number.parseInt(userId1) } } },
-						{ users: { some: { userId: Number.parseInt(userId2) } } },
+						{ users: { some: { userId: req.userId! } } },
+						{ users: { some: { userId: contactFound.id } } },
 						{ type: ChatType[ChatType.DIRECT] },
 					],
 				},
@@ -31,15 +48,15 @@ const chatController = {
 				return;
 			}
 
-			const newPrivateChat = await Chat.create({
+			const newDirectChat = await Chat.create({
 				data: {
 					type: ChatType.DIRECT,
 					users: {
-						create: [{ userId: Number.parseInt(userId1) }, { userId: Number.parseInt(userId2) }],
+						create: [{ userId: req.userId! }, { userId: contactFound.id }],
 					},
 				},
 			});
-			return res.json({ data: newPrivateChat }).status(200);
+			return res.json({ data: newDirectChat }).status(200);
 		} catch (error: any) {
 			res.json({ error: error.message }).status(500);
 		}
