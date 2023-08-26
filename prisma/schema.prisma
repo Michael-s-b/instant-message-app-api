@@ -18,6 +18,7 @@ model User {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   chats        User_Chat[]
+  messages     Message[]
 }
 
 model Chat {
@@ -26,6 +27,19 @@ model Chat {
   updatedAt DateTime    @updatedAt
   type      ChatType    @default(DIRECT)
   users     User_Chat[]
+  messages  Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  chatId    Int
+  edited    Boolean  @default(false)
 }
 
 model User_Chat {
