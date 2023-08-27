@@ -8,6 +8,7 @@ export const prismaClient = new PrismaClient();
 app.use("/api", Routes.authRouter);
 app.use("/api", Routes.userRouter);
 app.use("/api", Routes.chatRouter);
+app.use("/api", Routes.messageRouter);
 //start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {

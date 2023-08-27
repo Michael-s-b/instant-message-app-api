@@ -57,7 +57,7 @@ const authController = {
 				res.json({ error: "Invalid password" }).status(401);
 				return;
 			}
-			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!);
+			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!, { expiresIn: "6h" });
 			res.json({ data: { token } }).status(200);
 		} catch (error: any) {}
 	},
