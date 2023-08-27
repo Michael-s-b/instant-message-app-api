@@ -22,7 +22,7 @@ const authService = {
 			const newUser = await User.create({ data: { username, email, passwordHash: hashedPassowrd } });
 			return newUser;
 		} catch (error: any) {
-			throw error;
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	},
 	async signIn(username: any, password: any) {
@@ -52,7 +52,7 @@ const authService = {
 			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!, { expiresIn: "6h" });
 			return token;
 		} catch (error: any) {
-			throw error;
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	},
 	async logOut() {

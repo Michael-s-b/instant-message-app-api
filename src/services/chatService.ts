@@ -10,7 +10,7 @@ const chatService = {
 			});
 			return chats;
 		} catch (error: any) {
-			throw error;
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	},
 	async createDirectChat(userId: any, contactId: any) {
@@ -51,7 +51,7 @@ const chatService = {
 			});
 			return newDirectChat;
 		} catch (error: any) {
-			throw createError(500, error.message);
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	},
 };
