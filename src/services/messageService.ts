@@ -41,5 +41,35 @@ const messageService = {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	},
+	deleteMessage: async (messageId: any, userId: any) => {
+		try {
+			if (!messageId || !userId) throw createError(400, "Missing required fields");
+			userId = Number.parseInt(userId);
+			messageId = Number.parseInt(messageId);
+			const deletedMessage = await Message.update({
+				data: { deleted: true, content: "" },
+				where: { id: messageId, userId: userId },
+			});
+			if (!deletedMessage) throw createError(404, "Message not found");
+			return deletedMessage;
+		} catch (error: any) {
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
+		}
+	},
+	editMessage: async (messageId: any, content: any, userId: any) => {
+		try {
+			if (!messageId || !content || !userId) throw createError(400, "Missing required fields");
+			userId = Number.parseInt(userId);
+			messageId = Number.parseInt(messageId);
+			const updatedMessage = await Message.update({
+				data: { content: content, edited: true },
+				where: { id: messageId, userId: userId },
+			});
+			if (!updatedMessage) throw createError(404, "Message not found");
+			return updatedMessage;
+		} catch (error: any) {
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
+		}
+	},
 };
 export default messageService;

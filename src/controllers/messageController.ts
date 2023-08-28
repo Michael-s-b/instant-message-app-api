@@ -21,7 +21,26 @@ const messageController = {
 			return res.status(error.statusCode || 500).json({ error: error.message });
 		}
 	},
-	async updateMessage(req: Request, res: Response) {},
-	async deleteMessage(req: Request, res: Response) {},
+	async editMessage(req: Request, res: Response) {
+		const { content } = req.body;
+		const messageId = req.params.id;
+		const userId = req.userId;
+		try {
+			const editedMessage = await messageService.editMessage(messageId, content, userId);
+			res.status(200).json(editedMessage);
+		} catch (error: any) {
+			return res.status(error.statusCode || 500).json({ error: error.message });
+		}
+	},
+	async deleteMessage(req: Request, res: Response) {
+		const messageId = req.params.id;
+		const userId = req.userId;
+		try {
+			const deletedMessage = await messageService.deleteMessage(messageId, userId);
+			res.status(200).json(deletedMessage);
+		} catch (error: any) {
+			return res.status(error.statusCode || 500).json({ error: error.message });
+		}
+	},
 };
 export default messageController;

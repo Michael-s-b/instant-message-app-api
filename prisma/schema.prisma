@@ -40,6 +40,7 @@ model Message {
   chat      Chat     @relation(fields: [chatId], references: [id])
   chatId    Int
   edited    Boolean  @default(false)
+  deleted   Boolean  @default(false)
 }
 
 model User_Chat {
