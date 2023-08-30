@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
-import { User } from "../models";
+import { UserService } from "../services/interfaces";
+import { UserServicePrisma } from "../services";
 const authTokenMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	let decodedToken: { userId: string };
+	const userService = new UserServicePrisma();
 	try {
 		const authorizationHeader = req.headers["authorization"];
 		if (!authorizationHeader) {
@@ -25,7 +27,8 @@ const authTokenMiddleware = async (req: Request, res: Response, next: NextFuncti
 			return next();
 		}
 		try {
-			const foundUser = await User.findUnique({ where: { id: Number.parseInt(decodedToken.userId) } });
+			//const foundUser = await User.findUnique({ where: { id: Number.parseInt(decodedToken.userId) } });
+			const foundUser = await userService.getUserById(Number.parseInt(decodedToken.userId));
 			if (!foundUser) {
 				req.userId = null;
 				req.authError = createError(404, "User with given token does not exist");

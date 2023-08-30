@@ -1,20 +1,26 @@
 import { Request, Response } from "express";
-import { User } from "../models";
+import { UserService } from "../services/interfaces";
+import { UserServicePrisma } from "../services";
 
-const userController = {
-	getAllUsers: async (req: Request, res: Response) => {
-		const allUsers = await User.findMany();
-
-		res.json({ data: allUsers }).status(200);
-	},
-	getUserById: (req: Request, res: Response) => {
+class UserController {
+	public async getAllUsers(req: Request, res: Response) {
+		let userService: UserService;
+		try {
+			userService = new UserServicePrisma();
+			const allUsers = await userService.getAllUsers();
+			res.json({ data: allUsers }).status(200);
+		} catch (error: any) {
+			return res.status(error.statusCode || 500).json({ error: error.message });
+		}
+	}
+	public async getUserById(req: Request, res: Response) {
 		res.send("GET /users/:id");
-	},
-	updateUser: (req: Request, res: Response) => {
+	}
+	public async updateUser(req: Request, res: Response) {
 		res.send("PUT /users/:id");
-	},
-	deleteUser: (req: Request, res: Response) => {
+	}
+	public async deleteUser(req: Request, res: Response) {
 		res.send("DELETE /users/:id");
-	},
-};
-export default userController;
+	}
+}
+export default UserController;

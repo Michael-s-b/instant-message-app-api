@@ -1,3 +1,3 @@
-export { default as User } from "./User";
-export { default as Chat } from "./Chat";
-export { default as Message } from "./Message";
+export { default as UserModel } from "./User";
+export { default as ChatModel } from "./Chat";
+export { default as MessageModel } from "./Message";

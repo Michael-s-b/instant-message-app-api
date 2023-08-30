@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-const Chat = prisma.chat;
-export default Chat;
+import { Chat } from "@prisma/client";
+interface ChatModel extends Chat {}
+export default ChatModel;

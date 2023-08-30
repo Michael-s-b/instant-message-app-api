@@ -1,4 +1,4 @@
-export { default as userController } from "./userController";
-export { default as chatController } from "./chatController";
-export { default as authController } from "./authController";
-export { default as messageController } from "./messageController";
+export { default as UserController } from "./UserController";
+export { default as ChatController } from "./ChatController";
+export { default as AuthController } from "./AuthController";
+export { default as MessageController } from "./MessageController";
