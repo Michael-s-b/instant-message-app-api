@@ -19,7 +19,10 @@ class UserServicePrisma implements UserService {
 	async createUser(username: any, email: any, hashedPassowrd?: any): Promise<UserModel> {
 		try {
 			if (!username || !email || !hashedPassowrd) throw createError(400, "Missing required fields");
-			return await this.User.create({ data: { username, email, passwordHash: hashedPassowrd } });
+			return await this.User.create({
+				data: { username, email, passwordHash: hashedPassowrd, Profile: { create: {} } },
+				include: { Profile: true },
+			});
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}

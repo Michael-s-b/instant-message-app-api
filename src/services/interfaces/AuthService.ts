@@ -1,7 +1,18 @@
 import { UserModel } from "../../models";
+export type AuthMethod = "jwt" | "google";
+export type SignUpParams<T extends AuthMethod> = T extends "jwt"
+	? { email: string; username: string; password: string }
+	: T extends "google"
+	? { googleCode: string }
+	: never;
 
+export type SignInParams<T extends AuthMethod> = T extends "jwt"
+	? { emailOrUsername: string; password: string }
+	: T extends "google"
+	? { googleCode: string }
+	: never;
 interface AuthService {
-	signIn(username: string | undefined, password: string | undefined): Promise<string>;
-	signUp(username: string | undefined, email: string | undefined, password: string | undefined): Promise<UserModel>;
+	signIn(params: SignInParams<AuthMethod>): Promise<string>;
+	signUp(params: SignUpParams<AuthMethod>): Promise<UserModel>;
 }
 export default AuthService;

@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
-import { PrismaClient } from "@prisma/client";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import { AuthService, UserService } from "./interfaces";
+import { SignInParams, SignUpParams } from "./interfaces/AuthService";
 
 //auth service should not be responsible for creating users or getting users
 //it should work independently of the database implementation or ORM's
@@ -16,7 +16,8 @@ class AuthServiceJWT implements AuthService {
 		// dependency injection
 		this.userService = injectedUserService;
 	}
-	public async signUp(username: any, email: any, password: any) {
+	public async signUp(params: SignUpParams<"jwt">) {
+		const { username, email, password } = params;
 		if (!username || !email || !password) {
 			throw createError(400, "Please fill all fields");
 		}
@@ -41,23 +42,12 @@ class AuthServiceJWT implements AuthService {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async signIn(emailOrUsername: any, password: any) {
+	public async signIn(params: SignInParams<"jwt">) {
+		const { emailOrUsername, password } = params;
 		if (!emailOrUsername || !password) {
 			throw createError(400, "Please fill all fields");
 		}
 		try {
-			// const existingUser = await this.User.findFirst({
-			// 	where: {
-			// 		OR: [
-			// 			{
-			// 				email: username,
-			// 			},
-			// 			{
-			// 				username: username,
-			// 			},
-			// 		],
-			// 	},
-			// });
 			const existingUser = await this.userService.getUserByEmailOrUsername(emailOrUsername);
 			if (!existingUser) {
 				throw createError(401, "Invalid email or username");
