@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { MessageServicePrisma } from "../services";
 import { MessageService } from "../services/interfaces";
 class MessageController {
+	//GET api/messages
 	public async getMessages(req: Request, res: Response) {
 		const chatId = req.body.chatId;
 		const userId = req.userId;
@@ -14,6 +15,7 @@ class MessageController {
 			return res.status(error.statusCode || 500).json({ error: error.message });
 		}
 	}
+	//POST api/messages
 	public async createMessage(req: Request, res: Response) {
 		const { content, chatId } = req.body;
 		const userId = req.userId;
@@ -26,6 +28,7 @@ class MessageController {
 			return res.status(error.statusCode || 500).json({ error: error.message });
 		}
 	}
+	//PUT api/messages/:id
 	public async editMessage(req: Request, res: Response) {
 		const { content } = req.body;
 		const messageId = req.params.id;
@@ -39,6 +42,7 @@ class MessageController {
 			return res.status(error.statusCode || 500).json({ error: error.message });
 		}
 	}
+	//DELETE api/messages/:id
 	public async deleteMessage(req: Request, res: Response) {
 		let messageService: MessageService;
 		const messageId = req.params.id;

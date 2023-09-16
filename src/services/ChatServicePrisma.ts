@@ -1,7 +1,6 @@
 import createError from "http-errors";
 import { ChatType } from "../enums";
 import { ChatService } from "./interfaces";
-import { PrismaClient } from "@prisma/client";
 import { prismaClient } from "../database";
 class ChatServicePrisma implements ChatService {
 	private User;
