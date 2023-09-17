@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuthServiceGoogle, AuthServiceLocal, UserServicePrisma } from "../services";
 import { AuthService, UserService } from "../services/interfaces";
-
+import { createRedisClient } from "../database";
 class AuthController {
 	//POST api/auth/signup
 	public async signUp(req: Request, res: Response) {
@@ -46,6 +46,20 @@ class AuthController {
 			return res.status(error.statusCode || 500).json({ error: error.message });
 		}
 	}
-	//public logOut (req: Request, res: Response) {},
+	//GET api/auth/logout
+	public async logOut(req: Request, res: Response) {
+		try {
+			const authorizationHeader = req.headers["authorization"];
+			const token = authorizationHeader!.split(" ")[1];
+			console.log("token: " + token);
+			const redisClient = createRedisClient();
+			await redisClient.connect();
+			console.log(await redisClient.setEx(token, 60 * 60 * 24, "blacklisted"));
+			await redisClient.disconnect();
+			res.status(200).json({ message: "Successfully logged out" });
+		} catch (error: any) {
+			return res.status(error.statusCode || 500).json({ error: error.message });
+		}
+	}
 }
 export default AuthController;

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
-import { UserService } from "../services/interfaces";
 import { UserServicePrisma } from "../services";
+import { createRedisClient } from "../database";
 const authTokenMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	let decodedToken: { userId: string };
 	const userService = new UserServicePrisma();
@@ -26,6 +26,16 @@ const authTokenMiddleware = async (req: Request, res: Response, next: NextFuncti
 			req.authError = createError(401, "Invalid token");
 			return next();
 		}
+		//check if token is blacklisted
+		const redisClient = createRedisClient();
+		await redisClient.connect();
+		if (await redisClient.exists(token)) {
+			req.userId = null;
+			req.authError = createError(401, "Token is blacklisted");
+			redisClient.disconnect();
+			return next();
+		}
+		redisClient.disconnect();
 		try {
 			//const foundUser = await User.findUnique({ where: { id: Number.parseInt(decodedToken.userId) } });
 			const foundUser = await userService.getUserById(Number.parseInt(decodedToken.userId));
