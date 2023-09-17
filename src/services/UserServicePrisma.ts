@@ -2,6 +2,8 @@ import { UserService } from "./interfaces";
 import { UserModel } from "../models";
 import createError from "http-errors";
 import { prismaClient } from "../database";
+import { AuthMethod } from "./interfaces/AuthService";
+import { CreateUserParams } from "./interfaces/UserService";
 
 class UserServicePrisma implements UserService {
 	private User;
@@ -16,11 +18,25 @@ class UserServicePrisma implements UserService {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	async createUser(username: any, email: any, hashedPassowrd?: any): Promise<UserModel> {
+	async createUser<T extends AuthMethod>(params: CreateUserParams<T>): Promise<UserModel> {
+		const { authMethod } = params;
+		if (authMethod === "google") {
+			const { googleId, email, username } = params;
+			try {
+				if (!googleId || !email || !username) throw createError(400, "Missing required fields");
+				return await this.User.create({
+					data: { username, email, googleId, Profile: { create: {} } },
+					include: { Profile: true },
+				});
+			} catch (error: any) {
+				throw createError(error.statusCode || 500, error.message || "Internal server error");
+			}
+		}
+		const { username, email, hashedPassword } = params;
 		try {
-			if (!username || !email || !hashedPassowrd) throw createError(400, "Missing required fields");
+			if (!username || !email || !hashedPassword) throw createError(400, "Missing required fields");
 			return await this.User.create({
-				data: { username, email, passwordHash: hashedPassowrd, Profile: { create: {} } },
+				data: { username, email, passwordHash: hashedPassword, Profile: { create: {} } },
 				include: { Profile: true },
 			});
 		} catch (error: any) {
@@ -50,7 +66,7 @@ class UserServicePrisma implements UserService {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	async updateUser(id: any, username: any, email: any, hashedPassowrd: any): Promise<UserModel | null> {
+	async updateUser(id: any, username: any, email: any, hashedPassword: any): Promise<UserModel | null> {
 		throw new Error("Method not implemented.");
 	}
 	async deleteUser(id: any): Promise<UserModel | null> {

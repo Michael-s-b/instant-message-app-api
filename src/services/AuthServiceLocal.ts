@@ -16,7 +16,7 @@ class AuthServiceJWT implements AuthService {
 		// dependency injection
 		this.userService = injectedUserService;
 	}
-	public async signUp(params: SignUpParams<"jwt">) {
+	public async signUp(params: SignUpParams<"local">) {
 		const { username, email, password } = params;
 		if (!username || !email || !password) {
 			throw createError(400, "Please fill all fields");
@@ -33,16 +33,16 @@ class AuthServiceJWT implements AuthService {
 				throw createError(400, "User with given username already exists");
 			}
 			const salt = await bcrypt.genSalt(10);
-			const hashedPassowrd = await bcrypt.hash(password, salt);
+			const hashedPassword = await bcrypt.hash(password, salt);
 
-			//const newUser = await this.User.create({ data: { username, email, passwordHash: hashedPassowrd } });
-			const newUser = await this.userService.createUser(username, email, hashedPassowrd);
+			//const newUser = await this.User.create({ data: { username, email, passwordHash: hashedPassword } });
+			const newUser = await this.userService.createUser({ username, email, hashedPassword, authMethod: "local" });
 			return newUser;
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async signIn(params: SignInParams<"jwt">) {
+	public async signIn(params: SignInParams<"local">) {
 		const { emailOrUsername, password } = params;
 		if (!emailOrUsername || !password) {
 			throw createError(400, "Please fill all fields");
@@ -54,7 +54,10 @@ class AuthServiceJWT implements AuthService {
 			}
 			//for now a user always has a hashedPassword so no need to check for null
 			// but in the future we might have a user that doesn't have a password for example using google auth
-			const isPasswordCorrect = await bcrypt.compare(password, existingUser.passwordHash);
+			if (!existingUser.passwordHash) {
+				throw createError(400, "User doesn't have a password");
+			}
+			const isPasswordCorrect = await bcrypt.compare(password, existingUser.passwordHash!);
 			if (!isPasswordCorrect) {
 				throw createError(401, "Invalid password");
 			}

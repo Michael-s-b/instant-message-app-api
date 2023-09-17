@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AuthServiceGoogle, AuthServiceJWT, UserServicePrisma } from "../services";
+import { AuthServiceGoogle, AuthServiceLocal, UserServicePrisma } from "../services";
 import { AuthService, UserService } from "../services/interfaces";
 
 class AuthController {
@@ -18,8 +18,8 @@ class AuthController {
 				const newUser = await (authService as AuthServiceGoogle).signUp({ googleCode });
 				return res.status(201).json(newUser);
 			}
-			authService = new AuthServiceJWT(userService);
-			const newUser = await (authService as AuthServiceJWT).signUp({ username, email, password });
+			authService = new AuthServiceLocal(userService);
+			const newUser = await (authService as AuthServiceLocal).signUp({ username, email, password });
 			return res.status(201).json(newUser);
 		} catch (error: any) {
 			return res.status(error.statusCode || 500).json({ error: error.message });
@@ -39,7 +39,7 @@ class AuthController {
 				const token = await (authService as AuthServiceGoogle).signIn({ googleCode });
 				return res.status(200).json(token);
 			}
-			authService = new AuthServiceJWT(userService);
+			authService = new AuthServiceLocal(userService);
 			const token = await authService.signIn({ emailOrUsername, password });
 			return res.status(200).json(token);
 		} catch (error: any) {

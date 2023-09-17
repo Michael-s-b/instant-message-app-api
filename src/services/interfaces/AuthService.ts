@@ -1,12 +1,12 @@
 import { UserModel } from "../../models";
-export type AuthMethod = "jwt" | "google";
-export type SignUpParams<T extends AuthMethod> = T extends "jwt"
+export type AuthMethod = "local" | "google";
+export type SignUpParams<T extends AuthMethod> = T extends "local"
 	? { email: string; username: string; password: string }
 	: T extends "google"
 	? { googleCode: string }
 	: never;
 
-export type SignInParams<T extends AuthMethod> = T extends "jwt"
+export type SignInParams<T extends AuthMethod> = T extends "local"
 	? { emailOrUsername: string; password: string }
 	: T extends "google"
 	? { googleCode: string }
