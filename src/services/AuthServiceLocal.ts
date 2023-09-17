@@ -36,7 +36,7 @@ class AuthServiceJWT implements AuthService {
 			const hashedPassword = await bcrypt.hash(password, salt);
 
 			//const newUser = await this.User.create({ data: { username, email, passwordHash: hashedPassword } });
-			const newUser = await this.userService.createUser({ username, email, hashedPassword, authMethod: "local" });
+			const newUser = await this.userService.createUserWithLocal({ username, email, hashedPassword });
 			return newUser;
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");

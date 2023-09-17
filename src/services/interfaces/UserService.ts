@@ -1,26 +1,8 @@
 import { UserModel } from "../../models";
-import { AuthMethod } from "./AuthService";
-
-export type CreateUserParams<T extends AuthMethod> = T extends "local"
-	? {
-			username: string;
-			email: string;
-			hashedPassword: string;
-			authMethod: T;
-	  }
-	: T extends "google"
-	? {
-			username: string;
-			email: string;
-			googleId: string;
-			authMethod: T;
-	  }
-	: never;
-
 interface UserService {
 	getAllUsers(): Promise<UserModel[]>;
-	//User can be created with different auth methods (local, google, etc.) the implementation of the service should handle all the cases
-	createUser<T extends AuthMethod>(params: CreateUserParams<T>): Promise<UserModel>;
+	createUserWithLocal(params: { username: string; hashedPassword: string; email: string }): Promise<UserModel>;
+	createUserWithGoogle(params: { username: string; email: string; googleId: string }): Promise<UserModel>;
 	getUserById(id: any): Promise<UserModel | null>;
 	getUserByEmail(email: any): Promise<UserModel | null>;
 	getUserByUsername(username: any): Promise<UserModel | null>;

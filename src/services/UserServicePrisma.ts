@@ -2,8 +2,6 @@ import { UserService } from "./interfaces";
 import { UserModel } from "../models";
 import createError from "http-errors";
 import { prismaClient } from "../database";
-import { AuthMethod } from "./interfaces/AuthService";
-import { CreateUserParams } from "./interfaces/UserService";
 
 class UserServicePrisma implements UserService {
 	private User;
@@ -11,27 +9,19 @@ class UserServicePrisma implements UserService {
 		// dependency injection
 		this.User = prismaClient.user;
 	}
-	async getAllUsers(): Promise<UserModel[]> {
+	async createUserWithGoogle(params: { googleId: string; email: string; username: string }): Promise<UserModel> {
+		const { googleId, email, username } = params;
 		try {
-			return await this.User.findMany();
+			if (!googleId || !email || !username) throw createError(400, "Missing required fields");
+			return await this.User.create({
+				data: { username, email, googleId, Profile: { create: {} } },
+				include: { Profile: true },
+			});
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	async createUser<T extends AuthMethod>(params: CreateUserParams<T>): Promise<UserModel> {
-		const { authMethod } = params;
-		if (authMethod === "google") {
-			const { googleId, email, username } = params;
-			try {
-				if (!googleId || !email || !username) throw createError(400, "Missing required fields");
-				return await this.User.create({
-					data: { username, email, googleId, Profile: { create: {} } },
-					include: { Profile: true },
-				});
-			} catch (error: any) {
-				throw createError(error.statusCode || 500, error.message || "Internal server error");
-			}
-		}
+	async createUserWithLocal(params: { username: string; email: string; hashedPassword: string }): Promise<UserModel> {
 		const { username, email, hashedPassword } = params;
 		try {
 			if (!username || !email || !hashedPassword) throw createError(400, "Missing required fields");
@@ -39,6 +29,13 @@ class UserServicePrisma implements UserService {
 				data: { username, email, passwordHash: hashedPassword, Profile: { create: {} } },
 				include: { Profile: true },
 			});
+		} catch (error: any) {
+			throw createError(error.statusCode || 500, error.message || "Internal server error");
+		}
+	}
+	async getAllUsers(): Promise<UserModel[]> {
+		try {
+			return await this.User.findMany();
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}

@@ -80,11 +80,10 @@ class AuthServiceGoogle implements AuthService {
 			if (existingUser) {
 				throw createError(400, "User with given username already exists");
 			}
-			const newUser = await this.userService.createUser({
+			const newUser = await this.userService.createUserWithGoogle({
 				username: userData.name,
 				email: userData.email,
 				googleId: userData.id,
-				authMethod: "google",
 			});
 			return newUser;
 		} catch (error: any) {
