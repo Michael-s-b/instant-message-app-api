@@ -1,17 +1,18 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { UserService } from "../services/interfaces";
 import { UserServicePrisma } from "../services";
+import { HTTP_STATUS_CODE } from "../enums";
 
 class UserController {
 	//GET api/users
-	public async getAllUsers(req: Request, res: Response) {
+	public async getAllUsers(req: Request, res: Response, next: NextFunction) {
 		let userService: UserService;
 		try {
 			userService = new UserServicePrisma();
 			const allUsers = await userService.getAllUsers();
-			res.json({ data: allUsers }).status(200);
+			res.json({ data: allUsers }).status(HTTP_STATUS_CODE.OK);
 		} catch (error: any) {
-			return res.status(error.statusCode || 500).json({ error: error.message });
+			next(error);
 		}
 	}
 	//GET api/users/:id

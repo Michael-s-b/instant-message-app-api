@@ -1,17 +1,18 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { ProfileServicePrisma } from "../services";
 import { ProfileService } from "../services/interfaces";
+import { HTTP_STATUS_CODE } from "../enums";
 class ProfileController {
 	//GET api/profiles
-	public async getProfiles(req: Request, res: Response) {
+	public async getProfiles(req: Request, res: Response, next: NextFunction) {
 		const userId = req.userId;
 		let profileService: ProfileService;
 		try {
 			profileService = new ProfileServicePrisma();
 			const profile = await profileService.getProfiles();
-			res.status(200).json(profile);
+			res.status(HTTP_STATUS_CODE.OK).json(profile);
 		} catch (error: any) {
-			return res.status(error.statusCode || 500).json({ error: error.message });
+			next(error);
 		}
 	}
 	//GET api/profiles/:id
