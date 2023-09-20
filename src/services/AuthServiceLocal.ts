@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import { AuthService, UserService } from "./interfaces";
-import { SignInParams, SignUpParams } from "./interfaces/AuthService";
+import { AuthToken, SignInParams, SignUpParams } from "./interfaces/AuthService";
 
 //auth service should not be responsible for creating users or getting users
 //it should work independently of the database implementation or ORM's
@@ -42,7 +42,7 @@ class AuthServiceJWT implements AuthService {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async signIn(params: SignInParams<"local">) {
+	public async signIn(params: SignInParams<"local">): Promise<AuthToken> {
 		const { emailOrUsername, password } = params;
 		if (!emailOrUsername || !password) {
 			throw createError(400, "Please fill all fields");
@@ -62,7 +62,7 @@ class AuthServiceJWT implements AuthService {
 				throw createError(401, "Invalid password");
 			}
 			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!, { expiresIn: "6h" });
-			return token;
+			return { token, expires: Date.now() + 6 * 60 * 60 * 1000 };
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}

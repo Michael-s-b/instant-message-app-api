@@ -3,6 +3,7 @@ import { AuthServiceGoogle, AuthServiceLocal, UserServicePrisma } from "../servi
 import { AuthService, UserService } from "../services/interfaces";
 import { createRedisClient } from "../database";
 import { HTTP_STATUS_CODE } from "../enums";
+import { AuthToken } from "../services/interfaces/AuthService";
 class AuthController {
 	//POST api/auth/signup
 	public async signUp(req: Request, res: Response, next: NextFunction) {
@@ -37,14 +38,23 @@ class AuthController {
 		let userService: UserService;
 		try {
 			userService = new UserServicePrisma();
+			let token: AuthToken;
 			if (provider === "google") {
 				authService = new AuthServiceGoogle(userService);
-				const token = await (authService as AuthServiceGoogle).signIn({ googleCode, redirectUri });
-				return res.status(HTTP_STATUS_CODE.OK).json(token);
+				token = await (authService as AuthServiceGoogle).signIn({ googleCode, redirectUri });
+			} else {
+				authService = new AuthServiceLocal(userService);
+				token = await authService.signIn({ emailOrUsername, password });
 			}
-			authService = new AuthServiceLocal(userService);
-			const token = await authService.signIn({ emailOrUsername, password });
-			return res.status(HTTP_STATUS_CODE.OK).json(token);
+			return res
+				.status(HTTP_STATUS_CODE.OK)
+				.cookie("AuthToken", token.token, {
+					httpOnly: false,
+					//secure: true,
+					sameSite: "none",
+					expires: new Date(token.expires),
+				})
+				.json({ ...token });
 		} catch (error: any) {
 			next(error);
 		}

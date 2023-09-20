@@ -10,7 +10,7 @@ class ChatController {
 		try {
 			chatService = new ChatServicePrisma();
 			const chatList = await chatService.getChatList(req.userId!);
-			res.json({ data: chatList }).status(HTTP_STATUS_CODE.OK);
+			res.json(chatList).status(HTTP_STATUS_CODE.OK);
 		} catch (error: any) {
 			next(error);
 		}
