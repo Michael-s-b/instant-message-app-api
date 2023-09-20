@@ -35,7 +35,7 @@ const authTokenMiddleware = async (req: Request, res: Response, next: NextFuncti
 			redisClient.disconnect();
 			return next();
 		}
-		redisClient.disconnect();
+		await redisClient.disconnect();
 		try {
 			//const foundUser = await User.findUnique({ where: { id: Number.parseInt(decodedToken.userId) } });
 			const foundUser = await userService.getUserById(Number.parseInt(decodedToken.userId));
