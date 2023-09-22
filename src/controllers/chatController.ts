@@ -7,9 +7,14 @@ class ChatController {
 	//GET api/chats
 	public async getAllChats(req: Request, res: Response, next: NextFunction) {
 		let chatService: ChatService;
+		const { includeUsers, includeMessages } = req.query;
 		try {
 			chatService = new ChatServicePrisma();
-			const chatList = await chatService.getChatList(req.userId!);
+			const chatList = await chatService.getChatList({
+				userId: req.userId!,
+				includeUsers: includeUsers === "true",
+				includeMessages: includeMessages === "true",
+			});
 			res.json(chatList).status(HTTP_STATUS_CODE.OK);
 		} catch (error: any) {
 			next(error);
@@ -17,11 +22,14 @@ class ChatController {
 	}
 	//POST api/chats/direct
 	public async createDirectChat(req: Request, res: Response, next: NextFunction) {
-		const { contactId } = req.body;
+		const { usernameOrEmail } = req.body;
 		let chatService: ChatService;
 		try {
 			chatService = new ChatServicePrisma();
-			const newChat = await chatService.createDirectChat(req.userId!, contactId);
+			const newChat = await chatService.createDirectChat({
+				userId: req.userId!,
+				usernameOrEmail: usernameOrEmail,
+			});
 			res.json({ data: newChat }).status(HTTP_STATUS_CODE.CREATED);
 		} catch (error: any) {
 			next(error);

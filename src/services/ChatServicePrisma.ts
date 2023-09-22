@@ -1,7 +1,21 @@
 import createError from "http-errors";
-import { ChatType } from "../enums";
+import { ChatType, HTTP_STATUS_CODE } from "../enums";
 import { ChatService } from "./interfaces";
 import { prismaClient } from "../database";
+import { Prisma } from "@prisma/client";
+import { DefaultArgs } from "@prisma/client/runtime/library";
+import z from "zod";
+import { type CreateDirectChatParams, GetChatListParams } from "./interfaces/ChatService";
+type ChatIncludeOptions = {} & Prisma.ChatInclude<DefaultArgs>;
+const CreateDirectChatParamsSchema = z.object({
+	userId: z.number(),
+	usernameOrEmail: z.string().email().or(z.string().min(3)),
+});
+const GetChatListParamsSchema = z.object({
+	userId: z.number(),
+	includeMessages: z.boolean(),
+	includeUsers: z.boolean(),
+});
 class ChatServicePrisma implements ChatService {
 	private User;
 	private Chat;
@@ -10,30 +24,48 @@ class ChatServicePrisma implements ChatService {
 		this.User = prismaClient.user;
 		this.Chat = prismaClient.chat;
 	}
-	public async getChatList(userId: any) {
+
+	public async getChatList(params: GetChatListParams) {
+		const { userId, includeMessages, includeUsers } = params;
+		try {
+			GetChatListParamsSchema.parse(params);
+		} catch (error: any) {
+			throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Invalid parameters");
+		}
+		const include: ChatIncludeOptions = {
+			users: includeUsers ? { select: { user: { select: { id: true, username: true } } } } : false,
+			messages: includeMessages ? true : false,
+		};
 		try {
 			const chats = await this.Chat.findMany({
 				where: { users: { some: { userId: userId! } } },
-				include: { users: { select: { userId: true } }, messages: true },
+				include: include,
 			});
 			return chats;
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async createDirectChat(userId: any, contactId: any) {
+	public async createDirectChat(params: CreateDirectChatParams) {
+		const { userId, usernameOrEmail } = params;
 		try {
-			if (!contactId) {
+			CreateDirectChatParamsSchema.parse(params);
+		} catch (error: any) {
+			throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Invalid parameters");
+		}
+
+		try {
+			if (!usernameOrEmail) {
 				throw createError(401, "Contact is required");
 			}
 			const contactFound = await this.User.findFirst({
-				where: { OR: [{ username: contactId }, { email: contactId }] },
+				where: { OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }] },
 			});
 			if (!contactFound) {
 				throw createError(404, "Contact not found");
 			}
 			if (userId === contactFound.id) {
-				throw createError(401, "Cannot create chat with yourself");
+				throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Cannot create chat with yourself");
 			}
 			//check if a direct chat between these two users doesn't already exist
 			const existingChat = await this.Chat.findFirst({
@@ -46,7 +78,7 @@ class ChatServicePrisma implements ChatService {
 				},
 			});
 			if (existingChat) {
-				throw createError(200, "A direct chat between given users already exist");
+				throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "A direct chat between given users already exist");
 			}
 
 			const newDirectChat = await this.Chat.create({
