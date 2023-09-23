@@ -1,7 +1,13 @@
 import createError from "http-errors";
 import { MessageService } from "./interfaces";
-import { PrismaClient } from "@prisma/client";
 import { prismaClient } from "../database";
+import {
+	CreateMessageParams,
+	DeleteMessageParams,
+	EditMessageParams,
+	GetMessageListParams,
+} from "./interfaces/MessageService";
+import { HTTP_STATUS_CODE } from "../enums";
 
 class MessageServicePrisma implements MessageService {
 	private Chat;
@@ -11,11 +17,9 @@ class MessageServicePrisma implements MessageService {
 		this.Chat = prismaClient.chat;
 		this.Message = prismaClient.message;
 	}
-	public async getMessageList(chatId: any, userId: any) {
+	public async getMessageList(params: GetMessageListParams) {
+		const { chatId, userId } = params;
 		try {
-			if (!chatId || !userId) throw createError(400, "Missing required fields");
-			userId = Number.parseInt(userId);
-			chatId = Number.parseInt(chatId);
 			const foundChat = await this.Chat.findFirst({
 				where: { id: chatId, users: { some: { userId: userId } } },
 				include: { messages: true, users: { select: { userId: true } } },
@@ -26,11 +30,9 @@ class MessageServicePrisma implements MessageService {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async createMessage(content: any, chatId: any, userId: any) {
+	public async createMessage(params: CreateMessageParams) {
+		const { content, chatId, userId } = params;
 		try {
-			chatId = Number.parseInt(chatId);
-			userId = Number.parseInt(userId);
-			if (!content || !chatId || !userId) throw createError(400, "Missing required fields");
 			const foundChat = await this.Chat.findUnique({
 				where: { id: chatId },
 				include: { users: { select: { userId: true } } },
@@ -43,38 +45,40 @@ class MessageServicePrisma implements MessageService {
 			}
 
 			const message = await this.Message.create({
-				data: { content: content, userId: userId!, chatId: Number.parseInt(chatId) },
+				data: { content: content, userId: userId!, chatId: chatId },
 			});
 			return message;
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async deleteMessage(messageId: any, userId: any) {
+	public async deleteMessage(params: DeleteMessageParams) {
+		const { messageId, userId } = params;
 		try {
-			if (!messageId || !userId) throw createError(400, "Missing required fields");
-			userId = Number.parseInt(userId);
-			messageId = Number.parseInt(messageId);
+			const foundMessage = await this.Message.findFirst({
+				where: { id: messageId, userId: userId },
+			});
+			if (!foundMessage) throw createError(HTTP_STATUS_CODE.NOT_FOUND, "Message not found");
 			const deletedMessage = await this.Message.update({
 				data: { deleted: true, content: "" },
 				where: { id: messageId, userId: userId },
 			});
-			if (!deletedMessage) throw createError(404, "Message not found");
 			return deletedMessage;
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async editMessage(messageId: any, content: any, userId: any) {
+	public async editMessage(params: EditMessageParams) {
+		const { messageId, content, userId } = params;
 		try {
-			if (!messageId || !content || !userId) throw createError(400, "Missing required fields");
-			userId = Number.parseInt(userId);
-			messageId = Number.parseInt(messageId);
+			const foundMessage = await this.Message.findFirst({
+				where: { id: messageId, userId: userId },
+			});
+			if (!foundMessage) throw createError(HTTP_STATUS_CODE.NOT_FOUND, "Message not found");
 			const updatedMessage = await this.Message.update({
 				data: { content: content, edited: true },
 				where: { id: messageId, userId: userId },
 			});
-			if (!updatedMessage) throw createError(404, "Message not found");
 			return updatedMessage;
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
