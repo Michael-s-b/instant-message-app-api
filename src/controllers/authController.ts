@@ -3,7 +3,15 @@ import { AuthServiceGoogle, AuthServiceLocal, UserServicePrisma } from "../servi
 import { AuthService, UserService } from "../services/interfaces";
 import { createRedisClient } from "../database";
 import { HTTP_STATUS_CODE } from "../enums";
-import { AuthToken } from "../services/interfaces/AuthService";
+import {
+	AuthToken,
+	SignInParamsGoogleSchema,
+	SignInParamsLocalSchema,
+	SignUpParamsGoogleSchema,
+	SignUpParamsLocalSchema,
+} from "../services/interfaces/AuthService";
+import createError from "http-errors";
+import { fromZodError } from "zod-validation-error";
 class AuthController {
 	//POST api/auth/signup
 	public async signUp(req: Request, res: Response, next: NextFunction) {
@@ -13,16 +21,22 @@ class AuthController {
 		const redirectUri = req.query.redirectUri as string;
 		let authService: AuthService;
 		let userService: UserService;
-
+		let newUser;
 		try {
 			userService = new UserServicePrisma();
 			if (provider === "google") {
+				const parsedParams = SignUpParamsGoogleSchema.safeParse({ googleCode, redirectUri });
+				if (!parsedParams.success)
+					throw createError(HTTP_STATUS_CODE.BAD_REQUEST, fromZodError(parsedParams.error).message);
 				authService = new AuthServiceGoogle(userService);
-				const newUser = await (authService as AuthServiceGoogle).signUp({ googleCode, redirectUri });
-				return res.status(HTTP_STATUS_CODE.CREATED).json(newUser);
+				newUser = await (authService as AuthServiceGoogle).signUp(parsedParams.data);
+			} else {
+				const parsedParams = SignUpParamsLocalSchema.safeParse({ username, email, password });
+				if (!parsedParams.success)
+					throw createError(HTTP_STATUS_CODE.BAD_REQUEST, fromZodError(parsedParams.error).message);
+				authService = new AuthServiceLocal(userService);
+				newUser = await (authService as AuthServiceLocal).signUp({ username, email, password });
 			}
-			authService = new AuthServiceLocal(userService);
-			const newUser = await (authService as AuthServiceLocal).signUp({ username, email, password });
 			return res.status(HTTP_STATUS_CODE.CREATED).json(newUser);
 		} catch (error: any) {
 			next(error);
@@ -40,11 +54,17 @@ class AuthController {
 			userService = new UserServicePrisma();
 			let token: AuthToken;
 			if (provider === "google") {
+				const parsedParams = SignInParamsGoogleSchema.safeParse({ googleCode, redirectUri });
+				if (!parsedParams.success)
+					throw createError(HTTP_STATUS_CODE.BAD_REQUEST, fromZodError(parsedParams.error).message);
 				authService = new AuthServiceGoogle(userService);
-				token = await (authService as AuthServiceGoogle).signIn({ googleCode, redirectUri });
+				token = await (authService as AuthServiceGoogle).signIn(parsedParams.data);
 			} else {
+				const parsedParams = SignInParamsLocalSchema.safeParse({ emailOrUsername, password });
+				if (!parsedParams.success)
+					throw createError(HTTP_STATUS_CODE.BAD_REQUEST, fromZodError(parsedParams.error).message);
 				authService = new AuthServiceLocal(userService);
-				token = await authService.signIn({ emailOrUsername, password });
+				token = await authService.signIn(parsedParams.data);
 			}
 			return res
 				.status(HTTP_STATUS_CODE.OK)

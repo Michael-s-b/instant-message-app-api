@@ -3,39 +3,24 @@ import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import { AuthService, UserService } from "./interfaces";
 import { AuthToken, SignInParams, SignUpParams } from "./interfaces/AuthService";
-
-//auth service should not be responsible for creating users or getting users
-//it should work independently of the database implementation or ORM's
-// it should only be responsible for authenticating users
-// it should take a UserService as a parameter
-// dependency injection
 class AuthServiceJWT implements AuthService {
-	private userService: UserService; // change to a UserService interface
+	private userService: UserService;
 	constructor(injectedUserService: UserService) {
-		//should take a UserService as a parameter
-		// dependency injection
 		this.userService = injectedUserService;
 	}
 	public async signUp(params: SignUpParams<"local">) {
 		const { username, email, password } = params;
-		if (!username || !email || !password) {
-			throw createError(400, "Please fill all fields");
-		}
 		try {
-			// let existingUser = await this.User.findUnique({ where: { email } });
 			let existingUser = await this.userService.getUserByEmail(email);
 			if (existingUser) {
 				throw createError(400, "User with given email already exists");
 			}
-			//existingUser = await this.User.findUnique({ where: { username } });
 			existingUser = await this.userService.getUserByUsername(username);
 			if (existingUser) {
 				throw createError(400, "User with given username already exists");
 			}
 			const salt = await bcrypt.genSalt(10);
 			const hashedPassword = await bcrypt.hash(password, salt);
-
-			//const newUser = await this.User.create({ data: { username, email, passwordHash: hashedPassword } });
 			const newUser = await this.userService.createUserWithLocal({ username, email, hashedPassword });
 			return newUser;
 		} catch (error: any) {
@@ -44,16 +29,11 @@ class AuthServiceJWT implements AuthService {
 	}
 	public async signIn(params: SignInParams<"local">): Promise<AuthToken> {
 		const { emailOrUsername, password } = params;
-		if (!emailOrUsername || !password) {
-			throw createError(400, "Please fill all fields");
-		}
 		try {
 			const existingUser = await this.userService.getUserByEmailOrUsername(emailOrUsername);
 			if (!existingUser) {
 				throw createError(401, "Invalid email or username");
 			}
-			//for now a user always has a hashedPassword so no need to check for null
-			// but in the future we might have a user that doesn't have a password for example using google auth
 			if (!existingUser.passwordHash) {
 				throw createError(400, "User doesn't have a password");
 			}
