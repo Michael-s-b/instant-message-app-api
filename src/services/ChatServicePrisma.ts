@@ -7,15 +7,7 @@ import { DefaultArgs } from "@prisma/client/runtime/library";
 import z from "zod";
 import { type CreateDirectChatParams, GetChatListParams } from "./interfaces/ChatService";
 type ChatIncludeOptions = {} & Prisma.ChatInclude<DefaultArgs>;
-const CreateDirectChatParamsSchema = z.object({
-	userId: z.number(),
-	usernameOrEmail: z.string().email().or(z.string().min(3)),
-});
-const GetChatListParamsSchema = z.object({
-	userId: z.number(),
-	includeMessages: z.boolean(),
-	includeUsers: z.boolean(),
-});
+
 class ChatServicePrisma implements ChatService {
 	private User;
 	private Chat;
@@ -27,11 +19,6 @@ class ChatServicePrisma implements ChatService {
 
 	public async getChatList(params: GetChatListParams) {
 		const { userId, includeMessages, includeUsers } = params;
-		try {
-			GetChatListParamsSchema.parse(params);
-		} catch (error: any) {
-			throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Invalid parameters");
-		}
 		const include: ChatIncludeOptions = {
 			users: includeUsers ? { select: { user: { select: { id: true, username: true } } } } : false,
 			messages: includeMessages ? true : false,
@@ -49,15 +36,6 @@ class ChatServicePrisma implements ChatService {
 	public async createDirectChat(params: CreateDirectChatParams) {
 		const { userId, usernameOrEmail } = params;
 		try {
-			CreateDirectChatParamsSchema.parse(params);
-		} catch (error: any) {
-			throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Invalid parameters");
-		}
-
-		try {
-			if (!usernameOrEmail) {
-				throw createError(401, "Contact is required");
-			}
 			const contactFound = await this.User.findFirst({
 				where: { OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }] },
 			});
