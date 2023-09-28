@@ -14,11 +14,15 @@ class MessageController {
 	//GET api/messages
 	public async getMessages(req: Request, res: Response, next: NextFunction) {
 		const chatId = req.query.chatId;
+		const limit = req.query.limit;
+		const offset = req.query.offset;
 		const userId = req.userId;
 		let messageService: MessageService;
 		const parsedParams = GetMessageListParamsSchema.safeParse({
 			chatId: parseInt(chatId as string),
 			userId,
+			limit: limit ? parseInt(limit as string) : undefined,
+			offset: offset ? parseInt(offset as string) : undefined,
 		});
 		try {
 			if (!parsedParams.success) {

@@ -71,7 +71,7 @@ class AuthController {
 				.cookie("AuthToken", token.token, {
 					httpOnly: false,
 					//secure: true,
-					sameSite: "none",
+					//sameSite: "none",
 					expires: new Date(token.expires),
 				})
 				.json({ ...token });

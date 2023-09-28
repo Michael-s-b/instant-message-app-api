@@ -18,11 +18,14 @@ class MessageServicePrisma implements MessageService {
 		this.Message = prismaClient.message;
 	}
 	public async getMessageList(params: GetMessageListParams) {
-		const { chatId, userId } = params;
+		const { chatId, userId, offset, limit } = params;
 		try {
 			const foundChat = await this.Chat.findFirst({
 				where: { id: chatId, users: { some: { userId: userId } } },
-				include: { messages: true, users: { select: { userId: true } } },
+				include: {
+					messages: { orderBy: { createdAt: "desc" }, take: limit, skip: offset },
+					users: { select: { userId: true } },
+				},
 			});
 			if (!foundChat) throw createError(401, "Either chat doesnt exist or user is not a participant");
 			return foundChat.messages;

@@ -11,11 +11,11 @@ class AuthServiceJWT implements AuthService {
 	public async signUp(params: SignUpParams<"local">) {
 		const { username, email, password } = params;
 		try {
-			let existingUser = await this.userService.getUserByEmail(email);
+			let existingUser = await this.userService.getUserByEmail({ email });
 			if (existingUser) {
 				throw createError(400, "User with given email already exists");
 			}
-			existingUser = await this.userService.getUserByUsername(username);
+			existingUser = await this.userService.getUserByUsername({ username });
 			if (existingUser) {
 				throw createError(400, "User with given username already exists");
 			}
@@ -28,9 +28,9 @@ class AuthServiceJWT implements AuthService {
 		}
 	}
 	public async signIn(params: SignInParams<"local">): Promise<AuthToken> {
-		const { emailOrUsername, password } = params;
+		const { usernameOrEmail, password } = params;
 		try {
-			const existingUser = await this.userService.getUserByEmailOrUsername(emailOrUsername);
+			const existingUser = await this.userService.getUserByEmailOrUsername({ usernameOrEmail });
 			if (!existingUser) {
 				throw createError(401, "Invalid email or username");
 			}

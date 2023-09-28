@@ -24,7 +24,7 @@ export type SignUpParams<T extends AuthMethod> = T extends "local"
 	: never;
 
 export const SignInParamsLocalSchema = z.object({
-	emailOrUsername: z.string().trim().min(3),
+	usernameOrEmail: z.string().trim().min(3),
 	password: z.string().trim().min(6).max(20),
 });
 export const SignInParamsGoogleSchema = z.object({

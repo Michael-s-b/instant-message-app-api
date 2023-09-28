@@ -49,7 +49,7 @@ class AuthServiceGoogle implements AuthService {
 				throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Parsing UserInfo failed");
 			}
 
-			const existingUser = await this.userService.getUserByEmailOrUsername(userInfo.email);
+			const existingUser = await this.userService.getUserByEmailOrUsername({ usernameOrEmail: userInfo.email });
 
 			if (!existingUser) {
 				throw createError(HTTP_STATUS_CODE.NOT_FOUND, "User with given email or username does not exist");
@@ -100,11 +100,11 @@ class AuthServiceGoogle implements AuthService {
 			} catch (error: any) {
 				throw createError(HTTP_STATUS_CODE.BAD_REQUEST, "Parsing UserInfo failed");
 			}
-			let existingUser = await this.userService.getUserByEmail(userInfo.email);
+			let existingUser = await this.userService.getUserByEmail({ email: userInfo.email });
 			if (existingUser) {
 				throw createError(400, "User with given email already exists");
 			}
-			existingUser = await this.userService.getUserByUsername(userInfo.name);
+			existingUser = await this.userService.getUserByUsername({ username: userInfo.name });
 			if (existingUser) {
 				throw createError(400, "User with given username already exists");
 			}

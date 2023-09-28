@@ -38,7 +38,7 @@ const authTokenMiddleware = async (req: Request, res: Response, next: NextFuncti
 		await redisClient.disconnect();
 		try {
 			//const foundUser = await User.findUnique({ where: { id: Number.parseInt(decodedToken.userId) } });
-			const foundUser = await userService.getUserById(Number.parseInt(decodedToken.userId));
+			const foundUser = await userService.getUserById({ id: Number.parseInt(decodedToken.userId) });
 			if (!foundUser) {
 				req.userId = null;
 				req.authError = createError(404, "User with given token does not exist");

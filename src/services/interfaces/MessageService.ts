@@ -7,6 +7,8 @@ export const GetMessageListParamsSchema = z.object({
 		required_error: "ChatId is requiered",
 	}),
 	userId: z.number(),
+	limit: z.number().default(20).optional(),
+	offset: z.number().default(0).optional(),
 });
 export type GetMessageListParams = z.infer<typeof GetMessageListParamsSchema>;
 
