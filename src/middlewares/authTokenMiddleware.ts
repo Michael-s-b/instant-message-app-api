@@ -27,15 +27,26 @@ const authTokenMiddleware = async (req: Request, res: Response, next: NextFuncti
 			return next();
 		}
 		//check if token is blacklisted
-		const redisClient = createRedisClient();
-		await redisClient.connect();
-		if (await redisClient.exists(token)) {
+		try {
+			const redisClient = createRedisClient();
+			await redisClient.connect();
+			if (await redisClient.exists(token)) {
+				req.userId = null;
+				req.authError = createError(401, "Token is blacklisted");
+				redisClient.disconnect();
+				return next();
+			}
+			await redisClient.disconnect();
+		} catch (error: any) {
 			req.userId = null;
-			req.authError = createError(401, "Token is blacklisted");
-			redisClient.disconnect();
+			req.authError = createError(
+				500,
+				error.message ||
+					"Unknown error occured while trying to connect to redis and check if token is blacklisted"
+			);
 			return next();
 		}
-		await redisClient.disconnect();
+
 		try {
 			//const foundUser = await User.findUnique({ where: { id: Number.parseInt(decodedToken.userId) } });
 			const foundUser = await userService.getUserById({ id: Number.parseInt(decodedToken.userId) });
