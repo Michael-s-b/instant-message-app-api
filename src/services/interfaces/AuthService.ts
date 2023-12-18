@@ -40,7 +40,7 @@ export type SignInParams<T extends AuthMethod> = T extends "local"
 	? z.infer<typeof SignInParamsGoogleSchema>
 	: never;
 interface AuthService {
-	signIn(params: SignInParams<AuthMethod>): Promise<AuthToken>;
+	signIn(params: SignInParams<AuthMethod>): Promise<UserModel & AuthToken>;
 	signUp(params: SignUpParams<AuthMethod>): Promise<UserModel>;
 }
 export default AuthService;

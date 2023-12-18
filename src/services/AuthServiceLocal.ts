@@ -3,6 +3,7 @@ import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import { AuthService, UserService } from "./interfaces";
 import { AuthToken, SignInParams, SignUpParams } from "./interfaces/AuthService";
+import { UserModel } from "../models";
 class AuthServiceJWT implements AuthService {
 	private userService: UserService;
 	constructor(injectedUserService: UserService) {
@@ -27,7 +28,7 @@ class AuthServiceJWT implements AuthService {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}
 	}
-	public async signIn(params: SignInParams<"local">): Promise<AuthToken> {
+	public async signIn(params: SignInParams<"local">): Promise<AuthToken & UserModel> {
 		const { usernameOrEmail, password } = params;
 		try {
 			const existingUser = await this.userService.getUserByEmailOrUsername({ usernameOrEmail });
@@ -42,7 +43,7 @@ class AuthServiceJWT implements AuthService {
 				throw createError(401, "Invalid password");
 			}
 			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!, { expiresIn: "6h" });
-			return { token, expires: Date.now() + 6 * 60 * 60 * 1000 };
+			return { token, expires: Date.now() + 6 * 60 * 60 * 1000, ...existingUser };
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}

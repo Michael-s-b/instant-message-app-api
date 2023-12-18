@@ -12,6 +12,7 @@ import {
 } from "../services/interfaces/AuthService";
 import createError from "http-errors";
 import { fromZodError } from "zod-validation-error";
+import { UserModel } from "../models";
 class AuthController {
 	//POST api/auth/signup
 	public async signUp(req: Request, res: Response, next: NextFunction) {
@@ -44,7 +45,7 @@ class AuthController {
 	}
 	//POST api/auth/signin
 	public async signIn(req: Request, res: Response, next: NextFunction) {
-		const { emailOrUsername, password } = req.body;
+		const { usernameOrEmail, password } = req.body;
 		const provider = req.query.provider as string;
 		const googleCode = req.query.code as string;
 		const redirectUri = req.query.redirectUri as string;
@@ -52,29 +53,29 @@ class AuthController {
 		let userService: UserService;
 		try {
 			userService = new UserServicePrisma();
-			let token: AuthToken;
+			let userAuth: AuthToken & UserModel;
 			if (provider === "google") {
 				const parsedParams = SignInParamsGoogleSchema.safeParse({ googleCode, redirectUri });
 				if (!parsedParams.success)
 					throw createError(HTTP_STATUS_CODE.BAD_REQUEST, fromZodError(parsedParams.error).message);
 				authService = new AuthServiceGoogle(userService);
-				token = await (authService as AuthServiceGoogle).signIn(parsedParams.data);
+				userAuth = await (authService as AuthServiceGoogle).signIn(parsedParams.data);
 			} else {
-				const parsedParams = SignInParamsLocalSchema.safeParse({ emailOrUsername, password });
+				const parsedParams = SignInParamsLocalSchema.safeParse({ usernameOrEmail, password });
 				if (!parsedParams.success)
 					throw createError(HTTP_STATUS_CODE.BAD_REQUEST, fromZodError(parsedParams.error).message);
 				authService = new AuthServiceLocal(userService);
-				token = await authService.signIn(parsedParams.data);
+				userAuth = await authService.signIn(parsedParams.data);
 			}
 			return res
 				.status(HTTP_STATUS_CODE.OK)
-				.cookie("AuthToken", token.token, {
+				.cookie("AuthToken", userAuth.token, {
 					httpOnly: false,
 					//secure: true,
 					//sameSite: "none",
-					expires: new Date(token.expires),
+					expires: new Date(userAuth.expires),
 				})
-				.json({ ...token });
+				.json({ id: userAuth.id, username: userAuth.username, email: userAuth.email });
 		} catch (error: any) {
 			next(error);
 		}

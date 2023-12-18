@@ -12,7 +12,7 @@ class AuthServiceGoogle implements AuthService {
 	constructor(injectedUserService: UserService) {
 		this.userService = injectedUserService;
 	}
-	async signIn(params: SignInParams<"google">): Promise<AuthToken> {
+	async signIn(params: SignInParams<"google">): Promise<AuthToken & UserModel> {
 		const { googleCode, redirectUri } = params;
 		try {
 			const oAuth2Client = new OAuth2Client(
@@ -56,7 +56,7 @@ class AuthServiceGoogle implements AuthService {
 			}
 
 			const token = jwt.sign({ userId: existingUser.id }, process.env.JWT_SECRET!, { expiresIn: "6h" });
-			return { token, expires: Date.now() + 6 * 60 * 60 * 1000 };
+			return { token, expires: Date.now() + 6 * 60 * 60 * 1000, ...existingUser };
 		} catch (error: any) {
 			throw createError(
 				error.statusCode || HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
