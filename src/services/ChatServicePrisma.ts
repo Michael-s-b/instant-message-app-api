@@ -18,10 +18,15 @@ class ChatServicePrisma implements ChatService {
 	}
 
 	public async getChatList(params: GetChatListParams) {
-		const { userId, includeMessages, includeUsers } = params;
+		const { userId, includeMessages, includeUsers, messagesLimit } = params;
 		const include: ChatIncludeOptions = {
 			users: includeUsers ? { select: { user: { select: { id: true, username: true } } } } : false,
-			messages: includeMessages ? true : false,
+			messages: includeMessages
+				? {
+						take: messagesLimit, // the amount of messages to take
+						orderBy: { createdAt: "desc" }, // Order by creation date in descending order
+				  }
+				: false,
 		};
 		try {
 			const chats = await this.Chat.findMany({

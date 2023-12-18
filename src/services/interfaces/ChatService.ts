@@ -8,6 +8,7 @@ export const GetChatListParamsSchema = z.object({
 	userId: z.number(),
 	includeMessages: z.boolean(),
 	includeUsers: z.boolean(),
+	messagesLimit: z.number(),
 });
 export type GetChatListParams = z.infer<typeof GetChatListParamsSchema>;
 export type CreateDirectChatParams = z.infer<typeof CreateDirectChatParamsSchema>;

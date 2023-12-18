@@ -10,11 +10,12 @@ class ChatController {
 	//GET api/chats
 	public async getAllChats(req: Request, res: Response, next: NextFunction) {
 		let chatService: ChatService;
-		const { includeUsers, includeMessages } = req.query;
+		const { includeUsers, includeMessages, messagesLimit } = req.query;
 		const parsedParams = GetChatListParamsSchema.safeParse({
 			userId: req.userId,
 			includeUsers: includeUsers === "true",
 			includeMessages: includeMessages === "true",
+			messagesLimit: Number.parseInt(messagesLimit as string) || 1,
 		});
 		try {
 			if (!parsedParams.success) {
@@ -25,6 +26,7 @@ class ChatController {
 				userId: req.userId!,
 				includeUsers: includeUsers === "true",
 				includeMessages: includeMessages === "true",
+				messagesLimit: parsedParams.data.messagesLimit,
 			});
 			res.json(chatList).status(HTTP_STATUS_CODE.OK);
 		} catch (error: any) {
