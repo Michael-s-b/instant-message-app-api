@@ -18,12 +18,25 @@ class MessageServicePrisma implements MessageService {
 		this.Message = prismaClient.message;
 	}
 	public async getMessageList(params: GetMessageListParams) {
-		const { chatId, userId, offset, limit } = params;
+		const { chatId, userId, limit, timestamp, direction } = params;
+		if (direction) {
+			if (direction !== "older" && direction !== "newer") {
+				throw createError(400, "Direction must be either 'older' or 'newer'");
+			}
+		}
 		try {
 			const foundChat = await this.Chat.findFirst({
 				where: { id: chatId, users: { some: { userId: userId } } },
 				include: {
-					messages: { orderBy: { createdAt: "desc" }, take: limit, skip: offset },
+					messages: {
+						where: {
+							createdAt: {
+								[direction && direction === "older" ? "lt" : "gt"]: timestamp,
+							},
+						},
+						orderBy: { createdAt: direction && direction === "older" ? "desc" : "asc" },
+						take: limit,
+					},
 					users: { select: { userId: true } },
 				},
 			});
@@ -46,11 +59,15 @@ class MessageServicePrisma implements MessageService {
 			if (!isParticipant || isParticipant.length === 0) {
 				throw createError(403, "Unauthorized, user does not belong to this chat");
 			}
-
-			const message = await this.Message.create({
-				data: { content: content, userId: userId!, chatId: chatId },
-			});
-			return message;
+			// Create message
+			try {
+				const message = await this.Message.create({
+					data: { content: content, userId: userId!, chatId: chatId },
+				});
+				return message;
+			} catch (error: any) {
+				throw createError(error.statusCode || 500, error.message || "Internal server error");
+			}
 		} catch (error: any) {
 			throw createError(error.statusCode || 500, error.message || "Internal server error");
 		}

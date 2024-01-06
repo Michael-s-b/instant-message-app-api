@@ -4,7 +4,7 @@ import { isAuthenticatedMiddleware } from "../middlewares";
 const profileRouter = Router();
 
 profileRouter.get("/profiles", isAuthenticatedMiddleware, new ProfileController().getProfiles);
-profileRouter.get("/profiles/:id", isAuthenticatedMiddleware, new ProfileController().getProfile);
+profileRouter.get("/profiles/:id", isAuthenticatedMiddleware, new ProfileController().getProfileById);
 profileRouter.put("/profiles/:id", isAuthenticatedMiddleware, new ProfileController().editProfile);
 
 export default profileRouter;

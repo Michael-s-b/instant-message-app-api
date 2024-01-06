@@ -8,7 +8,8 @@ export const GetMessageListParamsSchema = z.object({
 	}),
 	userId: z.number(),
 	limit: z.number().default(20).optional(),
-	offset: z.number().default(0).optional(),
+	timestamp: z.date().optional(),
+	direction: z.string().optional(),
 });
 export type GetMessageListParams = z.infer<typeof GetMessageListParamsSchema>;
 

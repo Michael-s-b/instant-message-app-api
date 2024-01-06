@@ -5,6 +5,7 @@ import { HTTP_STATUS_CODE } from "../enums";
 import { CreateDirectChatParamsSchema, GetChatListParamsSchema } from "../services/interfaces/ChatService";
 import createError from "http-errors";
 import { fromZodError } from "zod-validation-error";
+import { type SuccessResponse } from "../types/SuccessResponse";
 
 class ChatController {
 	//GET api/chats
@@ -28,7 +29,12 @@ class ChatController {
 				includeMessages: includeMessages === "true",
 				messagesLimit: parsedParams.data.messagesLimit,
 			});
-			res.json(chatList).status(HTTP_STATUS_CODE.OK);
+			const responseBody: SuccessResponse<typeof chatList> = {
+				status: "success",
+				message: "Successfully fetched chat list",
+				data: chatList,
+			};
+			return res.json(responseBody).status(HTTP_STATUS_CODE.OK);
 		} catch (error: any) {
 			next(error);
 		}
@@ -47,7 +53,12 @@ class ChatController {
 				userId: req.userId!,
 				usernameOrEmail: usernameOrEmail,
 			});
-			res.json({ data: newChat }).status(HTTP_STATUS_CODE.CREATED);
+			const responseBody: SuccessResponse<typeof newChat> = {
+				status: "success",
+				message: "Successfully created chat",
+				data: newChat,
+			};
+			return res.json(responseBody).status(HTTP_STATUS_CODE.CREATED);
 		} catch (error: any) {
 			next(error);
 		}

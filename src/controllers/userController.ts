@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { UserService } from "../services/interfaces";
 import { UserServicePrisma } from "../services";
 import { HTTP_STATUS_CODE } from "../enums";
+import { SuccessResponse } from "../types/SuccessResponse";
 
 class UserController {
 	//GET api/users
@@ -10,7 +11,12 @@ class UserController {
 		try {
 			userService = new UserServicePrisma();
 			const allUsers = await userService.getAllUsers();
-			res.json(allUsers).status(HTTP_STATUS_CODE.OK);
+			const responseBody: SuccessResponse<typeof allUsers> = {
+				status: "success",
+				message: "Successfully fetched all users",
+				data: allUsers,
+			};
+			res.json(responseBody).status(HTTP_STATUS_CODE.OK);
 		} catch (error: any) {
 			Next(error);
 		}
@@ -23,7 +29,12 @@ class UserController {
 		try {
 			userService = new UserServicePrisma();
 			const user = await userService.getUserById({ id: parseInt(id) });
-			res.json(user).status(user ? HTTP_STATUS_CODE.OK : HTTP_STATUS_CODE.NOT_FOUND);
+			const responseBody: SuccessResponse<typeof user> = {
+				status: "success",
+				message: "Successfully fetched user",
+				data: user,
+			};
+			res.json(responseBody).status(user ? HTTP_STATUS_CODE.OK : HTTP_STATUS_CODE.NOT_FOUND);
 		} catch (error: any) {
 			Next(error);
 		}
@@ -44,7 +55,12 @@ class UserController {
 		try {
 			userService = new UserServicePrisma();
 			const user = await userService.getUserById({ id: id! });
-			res.json(user).status(user ? HTTP_STATUS_CODE.OK : HTTP_STATUS_CODE.NOT_FOUND);
+			const responseBody: SuccessResponse<typeof user> = {
+				status: "success",
+				message: "Successfully fetched user",
+				data: user,
+			};
+			res.json(responseBody).status(user ? HTTP_STATUS_CODE.OK : HTTP_STATUS_CODE.NOT_FOUND);
 		} catch (error: any) {
 			Next(error);
 		}

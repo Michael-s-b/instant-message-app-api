@@ -38,7 +38,7 @@ model Message {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  content   String
+  content   String   @db.VarChar(1000)
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   chat      Chat     @relation(fields: [chatId], references: [id])
