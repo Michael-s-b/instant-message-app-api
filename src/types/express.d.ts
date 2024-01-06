@@ -5,6 +5,7 @@ declare global {
 		interface Request {
 			userId: number | null;
 			authError: HttpError | null;
+			token: string | null;
 		}
 	}
 }

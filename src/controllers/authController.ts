@@ -13,6 +13,13 @@ import {
 import createError from "http-errors";
 import { fromZodError } from "zod-validation-error";
 import { UserModel } from "../models";
+
+type SuccessResponse<TData> = {
+	status: "success";
+	message: string;
+	data?: TData;
+};
+
 class AuthController {
 	//POST api/auth/signup
 	public async signUp(req: Request, res: Response, next: NextFunction) {
@@ -38,7 +45,13 @@ class AuthController {
 				authService = new AuthServiceLocal(userService);
 				newUser = await (authService as AuthServiceLocal).signUp({ username, email, password });
 			}
-			return res.status(HTTP_STATUS_CODE.CREATED).json(newUser);
+			if (!newUser) throw createError(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, "Failed to create user");
+			const responseBody: SuccessResponse<null> = {
+				status: "success",
+				message: "Successfully signed up",
+				data: null,
+			};
+			res.status(HTTP_STATUS_CODE.CREATED).json(responseBody);
 		} catch (error: any) {
 			next(error);
 		}
@@ -67,15 +80,24 @@ class AuthController {
 				authService = new AuthServiceLocal(userService);
 				userAuth = await authService.signIn(parsedParams.data);
 			}
-			return res
-				.status(HTTP_STATUS_CODE.OK)
+			const responseBody: SuccessResponse<{
+				id: number;
+				username: string;
+				email: string;
+			}> = {
+				status: "success",
+				message: "Successfully signed in",
+				data: { id: userAuth.id, username: userAuth.username, email: userAuth.email },
+			};
+
+			res.status(HTTP_STATUS_CODE.OK)
 				.cookie("AuthToken", userAuth.token, {
-					httpOnly: false,
+					httpOnly: true,
 					//secure: true,
 					//sameSite: "none",
 					expires: new Date(userAuth.expires),
 				})
-				.json({ id: userAuth.id, username: userAuth.username, email: userAuth.email });
+				.json(responseBody);
 		} catch (error: any) {
 			next(error);
 		}
@@ -83,14 +105,21 @@ class AuthController {
 	//GET api/auth/logout
 	public async logOut(req: Request, res: Response, next: NextFunction) {
 		try {
-			const authorizationHeader = req.headers["authorization"];
-			const token = authorizationHeader!.split(" ")[1];
-			console.log("token: " + token);
+			const token = req.token!;
+			console.log("Blacklisted token: ", token);
 			const redisClient = createRedisClient();
 			await redisClient.connect();
 			console.log(await redisClient.setEx(token, 60 * 60 * 24, "blacklisted"));
 			await redisClient.disconnect();
-			res.status(HTTP_STATUS_CODE.OK).json({ message: "Successfully logged out" });
+			res.clearCookie("AuthToken");
+			res.status(HTTP_STATUS_CODE.OK);
+			const responseBody: SuccessResponse<null> = {
+				status: "success",
+				message: "Successfully logged out",
+				data: null,
+			};
+			res.json(responseBody);
+			return res;
 		} catch (error: any) {
 			next(error);
 		}

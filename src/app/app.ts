@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import { authTokenMiddleware, exceptionHandlerMiddleware } from "../middlewares";
 import Routes from "../routes";
 import cors from "cors";
@@ -30,6 +31,7 @@ const app = express();
 app.use(cors(corsOptions));
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(cookieParser()); // for parsing cookies
 app.use(authTokenMiddleware); // for decoding jwt token and authenticating user
 //routes
 app.use("/api", Routes.authRouter);
